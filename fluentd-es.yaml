@@ -50,7 +50,7 @@ spec:
     spec:
       serviceAccountName: fluentd-elasticsearch
       containers:
-      - image: /fluentd-es-aws:origin_master
+      - image: onfido/fluentd-es-aws:latest
         imagePullPolicy: Always
         name: fluentd-elasticsearch
         resources:
@@ -60,8 +60,6 @@ spec:
         volumeMounts:
         - mountPath: /var/log
           name: varlog
-        - mountPath: /etc/td-agent
-          name: fluentd-elasticsearch-config
         - mountPath: /var/lib/docker/containers
           name: varlibdockercontainers
           readOnly: true
@@ -89,6 +87,3 @@ spec:
       - hostPath:
           path: /var/lib/docker/containers
         name: varlibdockercontainers
-      - name: fluentd-elasticsearch-config
-        configMap:
-          name: fluentd-elasticsearch-config
