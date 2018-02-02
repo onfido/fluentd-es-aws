@@ -19,19 +19,19 @@
 apt-get update
 
 apt-get install -y -q --no-install-recommends \
-  curl ca-certificates make g++ sudo bash
+  curl ca-certificates make g++ sudo bash gnupg2
 
 # Install Fluentd.
-/usr/bin/curl -sSL https://toolbelt.treasuredata.com/sh/install-ubuntu-xenial-td-agent2.sh | sh
+/usr/bin/curl -L https://toolbelt.treasuredata.com/sh/install-debian-stretch-td-agent2.sh | sh
 
 # Change the default user and group to root.
 # Needed to allow access to /var/log/docker/... files.
 sed -i -e "s/USER=td-agent/USER=root/" -e "s/GROUP=td-agent/GROUP=root/" /etc/init.d/td-agent
 
 # Install the Elasticsearch Fluentd plug-in.
-# http://docs.fluentd.org/articles/plugin-management
-td-agent-gem install --no-document fluent-plugin-kubernetes_metadata_filter -v 0.24.0
-td-agent-gem install --no-document fluent-plugin-aws-elasticsearch-service -v 0.1.6
+# Do not update fluent-plugin-kubernetes_metadata_filter to v0.30-0.31. They are broken.
+td-agent-gem install --no-document fluent-plugin-kubernetes_metadata_filter -v 1.0.1
+td-agent-gem install --no-document fluent-plugin-aws-elasticsearch-service -v 1.0.0
 
 # Remove docs and postgres references
 rm -rf /opt/td-agent/embedded/share/doc \
@@ -41,7 +41,7 @@ rm -rf /opt/td-agent/embedded/share/doc \
   /opt/td-agent/embedded/share/postgresql
 
 apt-get remove -y make g++
-apt-get autoremove -y 
-apt-get clean -y 
+apt-get autoremove -y
+apt-get clean -y
 
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

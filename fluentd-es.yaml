@@ -1,55 +1,87 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  labels:
+    k8s-addon: fluentd-elasticsearch.addons.k8s.io
+  name: fluentd-elasticsearch
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluentd-elasticsearch
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: fluentd-elasticsearch
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fluentd-elasticsearch
+subjects:
+- kind: ServiceAccount
+  name: fluentd-elasticsearch
+  namespace: kube-system
+---
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   labels:
-    k8s-app: fluentd-logging
-    kubernetes.io/cluster-service: "true"
+    k8s-app: fluentd-elasticsearch
+    k8s-addon: fluentd-elasticsearch.addons.k8s.io
   name: fluentd-elasticsearch
   namespace: kube-system
 spec:
   selector:
     matchLabels:
-      k8s-app: fluentd-logging
-      kubernetes.io/cluster-service: "true"
+      k8s-app: fluentd-elasticsearch
   template:
     metadata:
-      creationTimestamp: null
       labels:
-        k8s-app: fluentd-logging
-        kubernetes.io/cluster-service: "true"
+        k8s-app: fluentd-elasticsearch
       name: fluentd-elasticsearch
       namespace: kube-system
     spec:
+      serviceAccountName: fluentd-elasticsearch
       containers:
-      - image: quay.io/cheungpat/fluentd-elasticsearch-aws:1.17-3
-        imagePullPolicy: IfNotPresent
+      - image: /fluentd-es-aws:origin_master
+        imagePullPolicy: Always
         name: fluentd-elasticsearch
         resources:
-          limits:
-            memory: 200Mi
           requests:
             cpu: 100m
             memory: 200Mi
-        terminationMessagePath: /dev/termination-log
         volumeMounts:
         - mountPath: /var/log
           name: varlog
+        - mountPath: /etc/td-agent
+          name: fluentd-elasticsearch-config
         - mountPath: /var/lib/docker/containers
           name: varlibdockercontainers
           readOnly: true
         env:
         - name: AWS_ACCESS_KEY_ID
-          value: <your aws access key id here>
+          valueFrom:
+            secretKeyRef:
+              name: fluentd-elasticsearch
+              key: access-key
         - name: AWS_SECRET_ACCESS_KEY
-          value: <your aws secret access key here>
+          valueFrom:
+            secretKeyRef:
+              name: fluentd-elasticsearch
+              key: secret-key
         - name: AWS_ELASTICSEARCH_URL
-          value: https://<your elasticsearch endpoint here>
+          value: https://ES_DOMAIN.eu-west-1.es.amazonaws.com
         - name: AWS_REGION
-          value: <your elasticsearch domain region>
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      securityContext: {}
-      terminationGracePeriodSeconds: 30
+          value: eu-west-1
+        - name: LOGSTASH_PREFIX
+          value: fluentd
       volumes:
       - hostPath:
           path: /var/log
@@ -57,3 +89,6 @@ spec:
       - hostPath:
           path: /var/lib/docker/containers
         name: varlibdockercontainers
+      - name: fluentd-elasticsearch-config
+        configMap:
+          name: fluentd-elasticsearch-config
