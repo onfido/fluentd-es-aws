@@ -29,7 +29,6 @@ apt-get install -y -q --no-install-recommends \
 sed -i -e "s/USER=td-agent/USER=root/" -e "s/GROUP=td-agent/GROUP=root/" /etc/init.d/td-agent
 
 # Install the Elasticsearch Fluentd plug-in.
-# Do not update fluent-plugin-kubernetes_metadata_filter to v0.30-0.31. They are broken.
 td-agent-gem install --no-document fluent-plugin-kubernetes_metadata_filter -v 1.0.1
 td-agent-gem install --no-document fluent-plugin-aws-elasticsearch-service -v 1.0.0
 
